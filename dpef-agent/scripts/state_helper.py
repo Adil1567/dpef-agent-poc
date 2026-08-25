@@ -170,6 +170,17 @@ def record_correction(feature: str, comment_id: int, summary: str, fix_commit: s
     return state
 
 
+def set_pr_info(feature: str, pr_number: int, pr_url: str) -> dict:
+    """Record the real PR number/URL once a PR has actually been opened."""
+    state = read_state(feature)
+    if state is None:
+        raise FileNotFoundError(f"no state file for feature '{feature}'")
+    state["pr_number"] = pr_number
+    state["pr_url"] = pr_url
+    write_state(state)
+    return state
+
+
 def _main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -201,6 +212,11 @@ def _main() -> None:
     p.add_argument("summary")
     p.add_argument("fix_commit")
 
+    p = sub.add_parser("set-pr-info", help="Record the PR number/URL once a PR is opened")
+    p.add_argument("feature")
+    p.add_argument("pr_number", type=int)
+    p.add_argument("pr_url")
+
     args = parser.parse_args()
 
     try:
@@ -221,6 +237,8 @@ def _main() -> None:
             result = reconcile(args.feature, args.github_status)
         elif args.command == "record-correction":
             result = record_correction(args.feature, args.comment_id, args.summary, args.fix_commit)
+        elif args.command == "set-pr-info":
+            result = set_pr_info(args.feature, args.pr_number, args.pr_url)
         print(json.dumps(result, indent=2))
     except (FileNotFoundError, FileExistsError, ValueError) as e:
         print(f"error: {e}", file=sys.stderr)

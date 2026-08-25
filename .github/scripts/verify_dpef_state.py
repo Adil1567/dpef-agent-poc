@@ -11,6 +11,14 @@ PR's status disagrees with what GitHub itself reports.
 This exists so that "the agent's state file said X" can never be trusted
 on its own — this check is what makes that claim independently verifiable
 before a human relies on it (e.g. before merging).
+
+Scope: this check only guards the MERGE step (via required-status-check
+branch protection). It does not guard the DEPLOY step — deploy has its
+own separate, synchronous guard: the dpef-build-feature skill re-fetches
+and reconciles the real PR status immediately before deploying, every
+time, regardless of whether this CI check ever ran. The two guards are
+independent and deliberately redundant: one blocks an unmerged PR from
+being merged, the other blocks an unmerged feature from being deployed.
 """
 
 import glob
