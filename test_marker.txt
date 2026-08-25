@@ -1,0 +1,1 @@
+This is a trivial test feature used to verify the dpef-build-feature workflow end to end.
