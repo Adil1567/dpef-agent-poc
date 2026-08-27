@@ -24,3 +24,10 @@ One entry per comment cycle. Format:
 **Classification:** implementation bug (spec only required a description and status label per effort; header text wasn't specified either way, so this is a polish fix, not new plan)
 **Action:** Changed STATUS.md's first column header from "Effort" to "Component". Pushed commit a94f43e.
 **Artifacts touched:** none
+
+### 2026-08-28 — Comment #5444793245
+**From:** Adil1567
+**Comment:** "Should STATUS.md also list a maintainer/owner per effort? That seems useful and isn't captured anywhere"
+**Classification:** spec gap (spec only required a description and status label; ownership was never specified)
+**Action:** Confirmed with user. Ran /opsx:update to add a new Scenario ("Contributor sees who owns an effort") and updated the Requirement text in specs/project-status/spec.md, added task 1.2 to tasks.md. Ran /opsx:apply to implement it (added Maintainer column to STATUS.md). Pushed commit 88e4618.
+**Artifacts touched:** specs/project-status/spec.md, tasks.md
