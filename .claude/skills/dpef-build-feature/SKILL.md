@@ -54,10 +54,10 @@ All state reads/writes go through `dpef-agent/scripts/state_helper.py` (see its 
 - **If the DPO asks for changes**: revise the code on the same working branch (do not create a new branch or new state file), then present an updated preview. Repeat until confirmed.
 - **If the DPO explicitly confirms** (e.g. "looks good", "open the PR", "yes"): open the pull request using the GitHub MCP tools (base = the repo's default branch from `dpef-agent/config.yaml`, head = the working branch). Commit the feature's state file itself into the PR branch (so the CI check described below has something to compare against). Then:
   ```bash
+  python3 dpef-agent/scripts/state_helper.py set-pr-info <feature-id> <pr-number> <pr-url>
   python3 dpef-agent/scripts/state_helper.py transition <feature-id> pr_open
   python3 dpef-agent/scripts/state_helper.py transition <feature-id> awaiting_review
   ```
-  Record the `pr_number` and `pr_url` by re-writing those fields into the state file (the `transition` subcommand only changes status; update these fields directly via the state helper's `write_state`, or extend the state after transition — do not leave `pr_number`/`pr_url` null once a PR exists).
   Report the PR URL to the DPO and tell them review now happens on the PR itself.
 
 ### 4. Checking on an in-progress feature (polling)

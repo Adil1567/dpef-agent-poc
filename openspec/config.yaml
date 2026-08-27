@@ -1,32 +1,28 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Tech stack: Python (uv for deps), LangGraph + LangChain for agent graphs,
+  Gradio for chat UI, Groq/OpenAI as pluggable LLM providers, Firecrawl for
+  web research tooling.
+  This repo hosts two separate efforts: research_chat_agent (a LangGraph
+  chat agent) and dpef-agent (a Claude Code skill pair - dpef-init and
+  dpef-build-feature - that turns DPO feature requests into human-gated
+  GitHub PRs). They are independent; do not conflate their conventions.
+  Tests use pytest (uv add --dev pytest), run via `uv run pytest`.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - State explicitly which of the two efforts (research_chat_agent or
+      dpef-agent) this change affects, since they have unrelated conventions
+  tasks:
+    - Break tasks into chunks small enough to verify with a single command
+      or a single live test, not just "implement X"
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+operations:
+  apply:
+    guidance:
+      - Prefer live verification (run the code, check real output) over
+        marking a task done from reasoning alone
+  archive:
+    guidance:
+      - Note in the summary which of the two efforts this change affected

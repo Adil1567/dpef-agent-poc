@@ -105,7 +105,7 @@ Implement tasks from an OpenSpec change.
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
+   - If all done: if the schema defines a `pr` artifact (check `openspec status --change "<name>" --json`), suggest opening a PR via the `openspec-pr-lifecycle` skill; otherwise suggest archive
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -137,6 +137,7 @@ Working on task 4/7: <task description>
 ...
 
 All tasks complete! You can archive this change with `/opsx:archive`.
+(If this schema has a `pr` artifact, suggest instead: "All tasks complete! Ready to open a PR - the openspec-pr-lifecycle skill can do that for you, or archive with `/opsx:archive` if you don't need a PR.")
 ```
 
 **Output On Pause (Issue Encountered)**
