@@ -2,7 +2,7 @@
 
 - **PR URL:** https://github.com/Adil1567/dpef-agent-poc/pull/5
 - **PR Number:** 5
-- **Status:** open
+- **Status:** merged
 - **Branch:** feat/add-status-badge-note
 
 ## Review Log
