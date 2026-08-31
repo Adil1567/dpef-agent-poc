@@ -53,6 +53,10 @@ Do not open a PR without the tasks being complete. Do not open a second PR for a
 2. Fetch the PR's current comments/review activity via GitHub MCP tools.
 3. For each comment newer than the highest logged ID, triage it (step 4). Do not advance past a comment in the Review Log until its action is actually complete — an unresolved comment stays unlogged so it's re-surfaced on the next poll.
 4. Check merge/close status via GitHub MCP tools and **report it to the user directly in conversation** (e.g. "PR #5 is merged"). Do **not** write this back to `pr.md` on its own — see "Why Status isn't updated live" below. The only exception is while a comment-triage cycle already has a real code/artifact change to commit (step 4a/4b) — in that one case, also refresh the Status field as part of that same commit, since a PR is already required for it.
+5. **If GitHub now reports the PR as merged or closed, and `pr.md`'s stored Status field still shows the "open (as of creation...)" placeholder** (i.e. this is the first time you've observed the terminal state): add a brief, non-blocking suggestion to archive, in the same response - do not turn it into a separate question or wait for an answer before continuing:
+   - Merged: "PR #5 is merged. Per OpenSpec's recommended workflow, changes are archived after their PR merges — say the word if you'd like me to do that now."
+   - Closed without merging: "PR #5 was closed without merging. If this attempt is done, I can archive it to keep the record accurate — or if you want to retry, let me know and I'll open a new PR on the same change instead."
+   Mention this once per terminal-state transition, not on every subsequent poll of an already-resolved PR - if the user doesn't act on it, don't repeat the suggestion next time they check the same change.
 
 ### Why Status isn't updated live
 
@@ -105,10 +109,15 @@ If `pr.md` shows `Status: closed` (closed without merging) and the user explicit
 3. Open a new PR (step 2 above) and overwrite the PR URL/Number/Status/Branch fields with the new PR's info.
 Never do this automatically just because `Status` reads `closed` — always require an explicit user instruction to restart.
 
+### Only the "archive after merge" convention is supported
+
+OpenSpec's own team-workflow docs describe two conventions: archive after the PR merges (recommended), or archive inside the same PR as the code. **Only the first is supported when a `pr` artifact is involved.** Archiving inside the code PR is structurally incompatible with this skill's design: `/opsx:archive`'s step 2.5 needs to read the PR's final GitHub status (merged or closed) to write an accurate `pr.md` Status field, but that status doesn't exist yet while the code PR is still open and its own commits are being written. Archiving at that point would either write a guess or a value that becomes wrong the moment the PR gets more review activity, and if the PR is later rejected or needs rework, the change would need to be un-archived to keep working - moving folders and syncing specs back out of `openspec/changes/archive/`. If a user asks to archive a change whose `pr` artifact still shows a non-terminal status (not confirmed merged or closed by GitHub), explain this and wait until the PR resolves first.
+
 ## Guardrails
 
 - Never push a corrective commit without explicit user confirmation of that specific fix.
 - Never merge a pull request. Merging only happens when the user merges it directly in GitHub.
+- Never archive a change with a `pr` artifact while its PR is still open/unresolved on GitHub - confirm merged or closed first (see "Only the archive after merge convention is supported" above).
 - Never open a second PR for a change without an explicit user instruction to restart after an abandoned PR — one change maps to one PR by default.
 - Never classify a comment as "just a bug" to avoid the update/apply cycle when it's actually ambiguous — ask the user which bucket it falls in rather than guessing, since this decision controls whether planning artifacts get revised.
 - Never re-process a comment already logged in `pr.md`'s Review Log — always read the log fresh from disk first to find the true watermark.
