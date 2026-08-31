@@ -73,6 +73,17 @@ Archive a completed change in the experimental workflow.
    - Ask the user to confirm they want to proceed
    - Proceed if user confirms
 
+2.5. **Refresh PR status if this change has a `pr` artifact**
+
+   If the change's schema defines a `pr` artifact and its `pr.md` exists, this is the point to reconcile it with GitHub before archiving - archiving already needs its own PR against `main` in repos with mandatory-PR branch protection, so this is the natural place to fold in what would otherwise be a wasted single-purpose PR (see `openspec-pr-lifecycle`'s "Why Status isn't updated live" section).
+
+   - Read `pr.md`, get the PR number.
+   - Fetch the PR's current merge/close status via GitHub MCP tools.
+   - Update `pr.md`'s Status field to match (`merged` / `closed` / current review state), replacing the "as of creation" placeholder text.
+   - This edit rides along in the same archive commit/PR - do not open a separate PR just for this.
+
+   Skip this step entirely if the change's schema has no `pr` artifact.
+
 3. **Check task completion status**
 
    Read the tasks file (typically `tasks.md`) to check for incomplete tasks.

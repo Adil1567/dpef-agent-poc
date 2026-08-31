@@ -42,7 +42,7 @@ openspec status --change "<name>" --json
    ```
 2. Determine the implementation branch (the branch `/opsx:apply`'s commits were made on — ask the user if it's not obvious from git state).
 3. Open the pull request using the GitHub MCP tools (base = the repo's default branch, head = the implementation branch).
-4. Write `pr.md` at the resolved output path using the schema's `pr.md` template: fill in PR URL, PR Number, Status (`open`), Branch. Leave the Review Log section empty (no entries yet).
+4. Write `pr.md` at the resolved output path using the schema's `pr.md` template: fill in PR URL, PR Number, Status (`open (as of creation — ask this skill or check GitHub for current status)`), Branch. Leave the Review Log section empty (no entries yet).
 5. Report the PR URL to the user.
 
 Do not open a PR without the tasks being complete. Do not open a second PR for a change that already has one recorded in `pr.md` — if `pr.md` already has a PR URL and `Status` is not `closed`, treat this request as a poll (step 3) instead.
@@ -52,10 +52,16 @@ Do not open a PR without the tasks being complete. Do not open a second PR for a
 1. Read `pr.md` from disk to get the PR number and the highest comment ID already logged in the Review Log.
 2. Fetch the PR's current comments/review activity via GitHub MCP tools.
 3. For each comment newer than the highest logged ID, triage it (step 4). Do not advance past a comment in the Review Log until its action is actually complete — an unresolved comment stays unlogged so it's re-surfaced on the next poll.
-4. Check merge/close status via GitHub MCP tools and update `pr.md`'s Status field:
-   - Merged → `Status: merged`
-   - Closed without merging → `Status: closed`
-   - Otherwise → `Status: awaiting_review` or `Status: changes_requested`, whichever fits
+4. Check merge/close status via GitHub MCP tools and **report it to the user directly in conversation** (e.g. "PR #5 is merged"). Do **not** write this back to `pr.md` on its own — see "Why Status isn't updated live" below. The only exception is while a comment-triage cycle already has a real code/artifact change to commit (step 4a/4b) — in that one case, also refresh the Status field as part of that same commit, since a PR is already required for it.
+
+### Why Status isn't updated live
+
+Many teams (including environments with mandatory-PR branch protection on `main`) require every write to `main` to go through review. A bare `pr.md` status flip ("open" → "merged") is bookkeeping, not code under review, and doesn't deserve its own single-purpose PR — that's wasted process for a one-line change. So:
+
+- `pr.md`'s `Status` field is set once at creation (`open`) and is **not** kept live-synced with GitHub on every poll.
+- Label it honestly so nobody is misled by stale data: write it as `Status: open (as of creation — ask this skill or check GitHub for current status)`.
+- The field only gets refreshed as a **side effect of a commit that already has another reason to exist** — either a comment-triage commit (4a/4b above), or during `/opsx:archive`, which already needs its own PR to move the change directory. The archive workflow should, as part of that same PR, read the change's `pr.md` and current GitHub PR status, and update the Status field to match before archiving. If you are implementing or invoking `/opsx:archive` for a change with a `pr` artifact, include this refresh.
+- Never open a dedicated PR whose only content is a `pr.md` status update. If asked to do so, explain this convention and suggest waiting for the next real commit or archive instead.
 
 ### 4. Triaging a comment
 
