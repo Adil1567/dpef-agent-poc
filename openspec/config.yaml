@@ -1,19 +1,13 @@
 schema: spec-driven
 
 context: |
-  Tech stack: Python (uv for deps), LangGraph + LangChain for agent graphs,
-  Gradio for chat UI, Groq/OpenAI as pluggable LLM providers, Firecrawl for
-  web research tooling.
-  This repo hosts two separate efforts: research_chat_agent (a LangGraph
-  chat agent) and dpef-agent (a Claude Code skill pair - dpef-init and
-  dpef-build-feature - that turns DPO feature requests into human-gated
-  GitHub PRs). They are independent; do not conflate their conventions.
-  Tests use pytest (uv add --dev pytest), run via `uv run pytest`.
+  This repo hosts dpef-agent: a Claude Code skill pair (dpef-init and
+  dpef-build-feature) that turns DPO feature requests into human-gated
+  GitHub PRs, plus the OpenSpec extension work (spec-driven-pr schema and
+  openspec-pr-lifecycle skill) that gives OpenSpec changes their own PR
+  tracking, comment triage, and archive-time status reconciliation.
 
 rules:
-  proposal:
-    - State explicitly which of the two efforts (research_chat_agent or
-      dpef-agent) this change affects, since they have unrelated conventions
   tasks:
     - Break tasks into chunks small enough to verify with a single command
       or a single live test, not just "implement X"
@@ -23,6 +17,3 @@ operations:
     guidance:
       - Prefer live verification (run the code, check real output) over
         marking a task done from reasoning alone
-  archive:
-    guidance:
-      - Note in the summary which of the two efforts this change affected
