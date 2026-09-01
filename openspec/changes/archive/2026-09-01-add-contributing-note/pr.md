@@ -2,7 +2,7 @@
 
 - **PR URL:** https://github.com/Adil1567/dpef-agent-poc/pull/14
 - **PR Number:** 14
-- **Status:** open (as of creation — ask this skill or check GitHub for current status)
+- **Status:** merged
 - **Branch:** feat/add-contributing-note
 
 ## Review Log
