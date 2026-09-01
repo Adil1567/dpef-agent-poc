@@ -1,4 +1,5 @@
-schema: spec-driven
+# schema: spec-driven
+schema: spec-driven-pr
 
 context: |
   This repo hosts dpef-agent: a Claude Code skill pair (dpef-init and
