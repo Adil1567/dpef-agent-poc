@@ -156,6 +156,20 @@ Archive a completed change in the experimental workflow.
    mv "<changeRoot>" "<planningHome.changesDir>/archive/<target-name>"
    ```
 
+5.5. **Commit and prepare a PR for the archive (if this repo requires PRs to reach its default branch)**
+
+   OpenSpec's own team-workflow convention treats `openspec/` as regular source: committed like any other file, following whatever review process the repo already uses (see `docs/team-workflow.md`, "You commit `openspec/` like any source"). If the current working tree is a git repository whose default branch requires pull requests (branch protection, or the user/project context has said so), this step finishes the job locally initiated by the archive move so it isn't left as uncommitted, unpushed changes:
+
+   - `git add` the moved/created/modified files (the archived folder's new location, any synced main spec files, and nothing unrelated).
+   - `git commit` with a clear message naming the archived change (e.g. "Archive <change-name>, sync <capability> spec").
+   - Create a fresh branch for this (e.g. `chore/archive-<change-name>`) and push it.
+   - **Stop here and ask the user**: "Archive committed and pushed to `chore/archive-<change-name>`. Want me to open the PR now, or will you do it yourself?" Do not open the PR automatically — the user decides when. This avoids creating an untracked, unreviewed PR that nobody is watching, the same reasoning `openspec-pr-lifecycle` uses for not auto-writing PR status live.
+   - If the user confirms, open the pull request using GitHub tools and report the URL. If they say they'll do it themselves, confirm the branch name and stop - do not check on it later unless asked.
+
+   If the repository does not require PRs to reach its default branch (direct pushes are allowed), commit and push directly to that branch instead of opening a branch/PR - there is no review gate to route through.
+
+   Skip this entire step if the working tree is not a git repository, or if committing archive changes is out of scope for how this project is being used (e.g. a scratch/demo environment) - use judgment, and ask if unclear.
+
 6. **Display summary**
 
    Show archive completion summary including:
@@ -164,6 +178,7 @@ Archive a completed change in the experimental workflow.
    - Archive location
    - Whether specs were synced (if applicable)
    - PR status reconciliation, if step 2.5 ran (e.g. "PR #5 confirmed merged")
+   - Whether the archive itself was committed/pushed, and its branch name, if step 5.5 ran
    - Note about any warnings (incomplete artifacts/tasks)
 
 **Output On Success**
@@ -176,6 +191,7 @@ Archive a completed change in the experimental workflow.
 **Archived to:** the archive path derived from `planningHome.changesDir`/<target-name>/
 **Specs:** <"✓ Synced to main specs" only if the step 4 verification passed; otherwise "No delta specs" or "Sync skipped">
 **PR:** <only present if step 2.5 ran, e.g. "#5 confirmed merged" or "#5 confirmed closed" - omit this line entirely if the change has no pr artifact>
+**Archive commit:** <only present if step 5.5 ran, e.g. "Pushed to chore/archive-<name> - awaiting your decision to open a PR" or "PR opened: <url>" or "Committed directly to <default-branch>" - omit if step 5.5 was skipped>
 
 <"All artifacts complete. All tasks complete." — or, if archived with warnings, list them instead (e.g. "Archived with 2 incomplete tasks")>
 ```
@@ -189,6 +205,7 @@ Archive a completed change in the experimental workflow.
 - If sync is requested, run the `openspec-sync-specs` workflow inline (agent-driven)
 - Never archive while a spec sync is still in flight — run the sync inline and verify the main specs before moving `changeRoot`
 - Never archive a change whose `pr` artifact exists but whose PR is still open/unresolved on GitHub — this check happens directly in step 2.5, regardless of how archive was invoked (does not depend on `openspec-pr-lifecycle` having been called first)
+- Never open the archive's own PR without the user's explicit confirmation — step 5.5 commits and pushes, then stops and asks; it does not open a PR automatically, to avoid creating an untracked PR nobody is watching
 - If delta specs exist, always run the sync assessment and show the combined summary before prompting
 - Apply relevant runtime context and report conflicts; operation guidance remains advisory
 - Consider every guidance entry and explain any inapplicable or conflicting advice
