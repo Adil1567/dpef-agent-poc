@@ -77,12 +77,13 @@ Archive a completed change in the experimental workflow.
 
    If the change's schema defines a `pr` artifact and its `pr.md` exists, this is the point to reconcile it with GitHub before archiving - archiving already needs its own PR against `main` in repos with mandatory-PR branch protection, so this is the natural place to fold in what would otherwise be a wasted single-purpose PR (see `openspec-pr-lifecycle`'s "Why Status isn't updated live" section).
 
-   - Read `pr.md`, get the PR number.
-   - Fetch the PR's current merge/close status via GitHub MCP tools.
-   - Update `pr.md`'s Status field to match (`merged` / `closed` / current review state), replacing the "as of creation" placeholder text.
-   - This edit rides along in the same archive commit/PR - do not open a separate PR just for this.
+   Skip this step entirely if the change's schema has no `pr` artifact, or `pr.md` does not exist yet (no PR was ever opened for this change).
 
-   Skip this step entirely if the change's schema has no `pr` artifact.
+   - Read `pr.md`. Find the PR number on the line matching `- **PR Number:** <number>` (exact label, case-sensitive). If that line is missing, malformed, or the number cannot be parsed, stop and report this to the user rather than guessing or skipping silently - `pr.md` may be corrupted or hand-edited incorrectly.
+   - Fetch that PR's current status via GitHub MCP tools (merged / closed-without-merging / still open under review).
+   - **If GitHub reports the PR is still open (neither merged nor closed): stop here and do not archive.** Tell the user the PR is still unresolved, report its current review state, and explain that archiving is only supported after the PR merges or is closed - see `openspec-pr-lifecycle`'s "Only the archive after merge convention is supported" section for why (the delta spec sync below would fold unreviewed work into the shared main specs, and if the PR is later rejected or reworked the change would need to be un-archived to keep working). This is a hard stop: do not proceed to steps 3-6 for this change until the user confirms the PR has since resolved.
+   - If GitHub reports merged or closed: update `pr.md`'s Status field to match (`merged` or `closed`), replacing the "as of creation" placeholder text. This edit rides along in the same archive commit/PR - do not open a separate PR just for this.
+   - Record the confirmed PR number and final status (e.g. "PR #5 confirmed merged") so it can be included in the archive summary output (step 6).
 
 3. **Check task completion status**
 
@@ -162,6 +163,7 @@ Archive a completed change in the experimental workflow.
    - Schema that was used
    - Archive location
    - Whether specs were synced (if applicable)
+   - PR status reconciliation, if step 2.5 ran (e.g. "PR #5 confirmed merged")
    - Note about any warnings (incomplete artifacts/tasks)
 
 **Output On Success**
@@ -173,6 +175,7 @@ Archive a completed change in the experimental workflow.
 **Schema:** <schema-name>
 **Archived to:** the archive path derived from `planningHome.changesDir`/<target-name>/
 **Specs:** <"✓ Synced to main specs" only if the step 4 verification passed; otherwise "No delta specs" or "Sync skipped">
+**PR:** <only present if step 2.5 ran, e.g. "#5 confirmed merged" or "#5 confirmed closed" - omit this line entirely if the change has no pr artifact>
 
 <"All artifacts complete. All tasks complete." — or, if archived with warnings, list them instead (e.g. "Archived with 2 incomplete tasks")>
 ```
@@ -185,6 +188,7 @@ Archive a completed change in the experimental workflow.
 - Show clear summary of what happened
 - If sync is requested, run the `openspec-sync-specs` workflow inline (agent-driven)
 - Never archive while a spec sync is still in flight — run the sync inline and verify the main specs before moving `changeRoot`
+- Never archive a change whose `pr` artifact exists but whose PR is still open/unresolved on GitHub — this check happens directly in step 2.5, regardless of how archive was invoked (does not depend on `openspec-pr-lifecycle` having been called first)
 - If delta specs exist, always run the sync assessment and show the combined summary before prompting
 - Apply relevant runtime context and report conflicts; operation guidance remains advisory
 - Consider every guidance entry and explain any inapplicable or conflicting advice
