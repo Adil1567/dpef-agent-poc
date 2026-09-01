@@ -10,7 +10,7 @@ metadata:
 
 Open a PR for an OpenSpec change's implemented branch, track it in `pr.md`, and handle review comments by fixing code directly for bugs or looping back through the planning artifacts for real spec gaps.
 
-**Precondition**: The change must use a schema with a `pr` artifact (e.g. `spec-driven-pr`) and its `tasks` artifact must be `done`. If `tasks` isn't done yet, tell the user to finish `/opsx:apply` first and stop.
+**Precondition**: The change must use a schema with a `pr` artifact (e.g. `spec-driven-pr`) and every task in `tasks.md` must actually be checked off - not merely that `tasks.md` exists. `openspec status`'s artifact-level `done` for `tasks` means only "the file exists," which is true the moment `tasks.md` is created, even with every box still unchecked - it is not checkbox-aware. Use `openspec instructions apply` instead (see step 1), which genuinely parses `- [x]` vs `- [ ]` and returns a `progress` count. If any task remains unchecked, tell the user to finish `/opsx:apply` first and stop.
 
 **Model: one change, one PR.** A change (proposal + specs + design + tasks) is already scoped to one coherent unit of review, so it maps 1:1 to one branch and one PR. `pr.md` tracks exactly one PR for the life of the change. This skill does not open a second PR for a change that already has one recorded — see the "Abandoned PR" case below for the one exception.
 
@@ -31,8 +31,16 @@ There is no separate state file. `pr.md` (the change's `pr` artifact, at the pat
 openspec status --change "<name>" --json
 ```
 
-- If `tasks` is not `done`, stop and tell the user to finish implementation first.
 - If `pr` does not exist as an artifact on this change's schema, tell the user this schema doesn't support PR tracking (they'd need `spec-driven-pr` or a schema that includes a `pr` node) and stop.
+
+Then confirm task completion with the checkbox-aware command, not the artifact-level status above:
+
+```bash
+openspec instructions apply --change "<name>" --json
+```
+
+- Check `progress.remaining` in the response. **If it is not `0`, stop and tell the user to finish `/opsx:apply` first** - do not proceed to open a PR. `openspec status`'s `tasks: "done"` only means `tasks.md` exists on disk; it does not mean every checkbox is checked, so it must never be used alone as the completion signal here.
+- If `progress.remaining` is `0`, tasks are genuinely complete - proceed to step 2.
 
 ### 2. Opening the PR (pr.md does not exist yet, or has no PR URL recorded)
 
@@ -117,6 +125,7 @@ OpenSpec's own team-workflow docs describe two conventions: archive after the PR
 
 - Never push a corrective commit without explicit user confirmation of that specific fix.
 - Never merge a pull request. Merging only happens when the user merges it directly in GitHub.
+- Never treat `openspec status`'s `tasks: "done"` as proof implementation is complete — it only means `tasks.md` exists, not that every checkbox is checked. Always confirm via `openspec instructions apply`'s `progress.remaining === 0` before opening a PR.
 - Never archive a change with a `pr` artifact while its PR is still open/unresolved on GitHub - confirm merged or closed first (see "Only the archive after merge convention is supported" above).
 - Never open a second PR for a change without an explicit user instruction to restart after an abandoned PR — one change maps to one PR by default.
 - Never classify a comment as "just a bug" to avoid the update/apply cycle when it's actually ambiguous — ask the user which bucket it falls in rather than guessing, since this decision controls whether planning artifacts get revised.
