@@ -1,19 +1,42 @@
-Here's a full test script covering every use case this extension supports, organized by scenario. This assumes you've already copied openspec/schemas/spec-driven-pr/, .claude/skills/openspec-pr-lifecycle/, .claude/skills/openspec-apply-change/, .claude/skills/openspec-archive-change/, .claude/commands/opsx/apply.md, and .claude/commands/opsx/archive.md into the target repo.
+# PR-lifecycle extension — demo test script
 
-0. Prerequisites check
+Covers every use case in the `spec-driven-pr` schema + `openspec-pr-lifecycle` skill +
+generic `apply`/`archive` edits. Run from the repo root.
 
+Prereq: `openspec/schemas/spec-driven-pr/`, `.claude/skills/openspec-pr-lifecycle/`,
+`.claude/skills/openspec-apply-change/`, `.claude/skills/openspec-archive-change/`,
+`.claude/commands/opsx/apply.md`, `.claude/commands/opsx/archive.md` are already copied
+into this repo.
+
+---
+
+## 0. Prerequisites check
+
+```bash
 openspec --version
 openspec schemas --json | grep -A2 '"spec-driven-pr"'
 grep -c "openspec-pr-lifecycle" .claude/skills/openspec-archive-change/SKILL.md   # expect 0 — must NOT be hardcoded
-grep -c "\`pr\` artifact" .claude/skills/openspec-archive-change/SKILL.md         # expect 0 — must NOT be hardcoded
-1. Create a change and confirm the schema wires up pr correctly
+grep -c '`pr` artifact' .claude/skills/openspec-archive-change/SKILL.md          # expect 0 — must NOT be hardcoded
+```
 
+---
+
+## 1. Create a change and confirm the schema wires up `pr` correctly
+
+```bash
 openspec new change "test-feature" --schema spec-driven-pr
 openspec status --change test-feature --json
-Check: artifacts includes pr with requires: ["tasks"], status blocked.
+```
 
-2. Populate planning artifacts (minimal, for testing — normally /opsx:propose does this)
+**Check:** `artifacts` includes `pr` with `requires: ["tasks"]`, status `blocked`.
 
+---
+
+## 2. Populate planning artifacts
+
+(Normally `/opsx:propose` does this — this is the minimal manual version for testing.)
+
+```bash
 mkdir -p openspec/changes/test-feature/specs/test-capability
 
 cat > openspec/changes/test-feature/proposal.md <<'EOF'
@@ -52,69 +75,170 @@ cat > openspec/changes/test-feature/tasks.md <<'EOF'
 EOF
 
 openspec status --change test-feature --json
-Check: proposal, specs, design, tasks all done; pr now ready.
+```
 
-3. Test apply's generic PR discovery (Use Case: apply completion suggests next artifact)
+**Check:** `proposal`, `specs`, `design`, `tasks` all `done`; `pr` now `ready`.
 
+---
+
+## 3. Apply's generic PR discovery
+
+*(apply completion suggests the next artifact without hardcoding its id)*
+
+```bash
 openspec instructions apply --change test-feature --json
-Then in a Claude Code session: /opsx:apply test-feature — check off the one task, and confirm apply's completion message surfaces the pr artifact's instruction (not a hardcoded skill name) by verifying:
+```
 
+Then, in a Claude Code session:
 
+```
+/opsx:apply test-feature
+```
+
+Check off the one task. Confirm apply's completion message surfaces the `pr` artifact's
+instruction (not a hardcoded skill name), then verify directly:
+
+```bash
 openspec instructions pr --change test-feature --json
-Check: instruction field mentions openspec-pr-lifecycle (this comes from the schema, not from apply itself).
+```
 
-4. Test opening a PR (Use Case: openspec-pr-lifecycle step 2)
-Requires a real branch pushed to a real GitHub repo. In Claude Code:
+**Check:** `instruction` field mentions `openspec-pr-lifecycle` (comes from the schema, not from apply itself).
 
+---
 
+## 4. Opening a PR
+
+*(openspec-pr-lifecycle step 2 — requires a real branch pushed to a real GitHub repo)*
+
+In Claude Code:
+
+```
 Invoke openspec-pr-lifecycle to open a PR for test-feature. Branch <your-branch> is pushed, base is <default-branch>, repo is <owner/repo>.
-Check: openspec/changes/test-feature/pr.md created with PR URL/Number/Status/Branch filled in, Review Log empty.
+```
 
-5. Test polling — comments + new CI status feature (Use Case: openspec-pr-lifecycle step 3)
+**Check:** `openspec/changes/test-feature/pr.md` created with PR URL/Number/Status/Branch filled in, Review Log empty.
 
+---
+
+## 5. Polling — comments + CI status
+
+*(openspec-pr-lifecycle step 3)*
+
+```
 Check on the PR for test-feature.
-Check: response reports both comment triage AND a CI status line (e.g. "CI: all checks passing" / "CI: no checks configured on this PR" / failing check names).
+```
 
-6. Test comment triage — bug path (Use Case: step 4a)
-Leave a PR comment describing an implementation bug (code doesn't match spec). Poll again:
+**Check:** response reports both comment triage AND a CI status line
+(e.g. `CI: all checks passing` / `CI: no checks configured on this PR` / failing check names).
 
+---
 
+## 6. Comment triage — bug path
+
+*(step 4a — leave a PR comment describing an implementation bug, then poll again)*
+
+```
 Check on the PR for test-feature.
-Confirm: user is asked before any commit; on confirmation, code is fixed and pushed; pr.md's Review Log gets an entry; tasks.md/specs are untouched.
+```
 
-7. Test comment triage — spec-gap path (Use Case: step 4b)
-Leave a PR comment describing a new requirement not in the spec. Poll again. Confirm: it's surfaced as a spec gap (not silently fixed), and on your confirmation it invokes /opsx:update then /opsx:apply before pushing.
+**Confirm:** user is asked before any commit; on confirmation, code is fixed and pushed;
+`pr.md`'s Review Log gets an entry; `tasks.md`/specs are untouched.
 
-8. Test archive's generic reconciliation — not-yet-created case
+---
 
-openspec new change "test-no-pr"
-openspec status --change test-no-pr --json   # note: default schema, may not have pr artifact at all — or use spec-driven-pr and skip step 4 (don't create pr.md)
-Then /opsx:archive test-no-pr — confirm step 2.5 is skipped silently (no pr.md exists yet), archive proceeds normally.
+## 7. Comment triage — spec-gap path
 
-9. Test archive's hard stop (Use Case: unresolved PR blocks archive)
-With test-feature's PR still open on GitHub, run /opsx:archive test-feature. Confirm: archive refuses, reports the PR is still open, and does not move the change directory.
+*(step 4b — leave a PR comment describing a new requirement not in the spec, then poll again)*
 
+**Confirm:** it's surfaced as a spec gap (not silently fixed), and on your confirmation it
+invokes `/opsx:update` then `/opsx:apply` before pushing.
 
+---
+
+## 8. Archive's generic reconciliation — not-yet-created case
+
+```bash
+openspec new change "test-no-pr" --schema spec-driven-pr
+```
+
+Do **not** create `pr.md` for this change. Then:
+
+```
+/opsx:archive test-no-pr
+```
+
+**Confirm:** step 2.5 is skipped silently (no `pr.md` exists yet), archive proceeds normally.
+
+---
+
+## 9. Archive's hard stop
+
+*(unresolved PR blocks archive)*
+
+With `test-feature`'s PR still open on GitHub:
+
+```
+/opsx:archive test-feature
+```
+
+**Confirm:** archive refuses, reports the PR is still open, and does not move the change directory.
+
+```bash
 # Verify nothing moved:
 ls openspec/changes/test-feature   # should still exist, unarchived
-10. Test archive succeeding after merge (Use Case: full end-to-end)
-Merge the PR on GitHub, then /opsx:archive test-feature. Confirm:
+```
 
-Step 2.5 delegates to openspec-pr-lifecycle, which confirms merged and updates pr.md's Status field.
-Archive proceeds, moves the change to openspec/changes/archive/.
-Step 5.5 commits/pushes the archive move to a new branch and asks before opening its own PR — confirm it stops and asks, doesn't auto-open.
+---
 
+## 10. Archive succeeding after merge
+
+*(full end-to-end)*
+
+Merge the PR on GitHub, then:
+
+```
+/opsx:archive test-feature
+```
+
+**Confirm:**
+- Step 2.5 delegates to `openspec-pr-lifecycle`, which confirms merged and updates `pr.md`'s Status field.
+- Archive proceeds, moves the change to `openspec/changes/archive/`.
+- Step 5.5 commits/pushes the archive move to a new branch and **asks before opening its own PR** — confirm it stops and asks, doesn't auto-open.
+
+```bash
 ls openspec/changes/archive/ | grep test-feature
 cat openspec/changes/archive/*test-feature/pr.md | grep Status   # should say merged, not the "as of creation" placeholder
-11. Test recovery patch (Use Case: openspec update fragility)
+```
 
+---
+
+## 11. Recovery patch
+
+*(`openspec update` fragility)*
+
+```bash
 git stash   # if you have local edits
 openspec update --force   # will overwrite apply/archive stock files
 git diff --stat .claude/skills/openspec-apply-change/SKILL.md .claude/skills/openspec-archive-change/SKILL.md
-# ^ if this shows the generic edits reverted to stock:
-git apply openspec/patches/pr-lifecycle-workflow-edits.patch
-git apply --check openspec/patches/pr-lifecycle-workflow-edits.patch  # sanity check, should be silent/no error if already applied
-12. Cleanup
+```
 
+If that shows the generic edits reverted to stock:
+
+```bash
+git apply openspec/patches/pr-lifecycle-workflow-edits.patch
+git apply --check openspec/patches/pr-lifecycle-workflow-edits.patch  # sanity check, silent = already applied cleanly
+```
+
+---
+
+## 12. Cleanup
+
+```bash
 rm -rf openspec/changes/test-feature openspec/changes/test-no-pr openspec/changes/archive/*test-feature
-That covers every behavior we built and tested this session: generic discovery in apply/archive, PR opening, comment-poll with the new CI-status addition, both triage branches, the archive hard-stop guardrail, the post-merge success path, and the openspec update recovery patch.
+```
+
+---
+
+This covers every behavior built for this extension: generic discovery in apply/archive,
+PR opening, comment-poll with CI-status reporting, both triage branches, the archive
+hard-stop guardrail, the post-merge success path, and the `openspec update` recovery patch.
