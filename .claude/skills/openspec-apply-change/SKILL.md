@@ -109,7 +109,7 @@ Implement tasks from an OpenSpec change.
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: if the schema defines a `pr` artifact (check `openspec status --change "<name>" --json`), suggest opening a PR via the `openspec-pr-lifecycle` skill; otherwise suggest archive
+   - If all done: run `openspec status --change "<name>" --json` and look at `artifacts` for any entries beyond the ones `apply` just finished (i.e. artifacts not in `applyRequires`, now showing `ready`) - do not assume a specific id like `pr`, just check what the schema itself reports as the next ready artifact(s). For each such artifact, run `openspec instructions <artifact-id> --change "<name>" --json` and surface its `instruction` field to the user verbatim as the next-step suggestion (this is the schema's own canonical guidance, which may delegate to a skill or may not - follow whatever it says rather than hardcoding a skill name). If there is no such artifact, suggest archive
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -141,7 +141,7 @@ Working on task 4/7: <task description>
 ...
 
 All tasks complete! You can archive this change with `/opsx:archive`.
-(If this schema has a `pr` artifact, suggest instead: "All tasks complete! Ready to open a PR - the openspec-pr-lifecycle skill can do that for you, or archive with `/opsx:archive` if you don't need a PR.")
+(If `status` reports a further ready artifact beyond what apply just finished, instead surface that artifact's `instruction` field - fetched via `openspec instructions <artifact-id> --change "<name>" --json` - as the next-step suggestion, rather than hand-writing it or assuming its id.)
 ```
 
 **Output On Pause (Issue Encountered)**

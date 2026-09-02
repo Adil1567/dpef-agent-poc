@@ -69,6 +69,19 @@ Archive a completed change in the experimental workflow.
    - Prompt user for confirmation to continue
    - Proceed if user confirms
 
+2.5. **Reconcile any post-implementation artifact by delegating to its own skill**
+
+   Some schemas define an artifact that only becomes relevant after `tasks` is done (e.g. a PR-tracking artifact) and that needs external state (like GitHub PR status) reconciled before archiving is safe - archiving already needs its own PR against `main` in repos with mandatory-PR branch protection, so this is also the natural place to fold in what would otherwise be a wasted single-purpose commit for that reconciliation.
+
+   Discover such an artifact generically - never assume a specific id like `pr`, and never hand-parse its file: from the `artifacts` list already fetched in step 2, find any entry whose `requires` includes `tasks` and whose id is not one of the standard planning artifacts (`proposal`, `specs`, `design`, `tasks`). If none exists, or the one found has never been created yet (no `existingOutputPaths` for it in `artifactPaths`), skip this step entirely.
+
+   For each such artifact found:
+   - Run `openspec instructions <artifact-id> --change "<name>" --json` to read its `instruction` field.
+   - If `instruction` names a skill to delegate to, invoke that skill and ask it specifically to reconcile this artifact's tracked external status (e.g. "check whether the PR recorded in this artifact has merged or closed, and update the artifact accordingly") - do not read or write the artifact's file directly, and do not call GitHub (or any other external system) yourself. The delegated skill owns the file format and the external status check.
+   - If `instruction` does not name a skill to delegate to, this convention doesn't apply to this artifact - skip reconciliation for it and proceed (nothing to reconcile without a known owner).
+   - Require the delegated skill to report back one of: still open/unresolved, or resolved (merged/closed/whatever terminal states that artifact tracks). **If it reports still open/unresolved: stop here and do not archive.** Tell the user it's still unresolved, report what the skill found, and explain that archiving is only supported after it resolves (the delta spec sync below would fold unreviewed work into the shared main specs, and if it's later rejected or reworked the change would need to be un-archived to keep working). This is a hard stop: do not proceed to steps 3-6 for this change until the user confirms it has since resolved.
+   - If it reports resolved: the delegated skill is responsible for having already updated its own artifact file to reflect that. Record what it reported (e.g. "PR #5 confirmed merged") so it can be included in the archive summary output (step 6).
+
 3. **Check task completion status**
 
    Read the tasks file (typically `tasks.md`) to check for incomplete tasks.
@@ -140,6 +153,20 @@ Archive a completed change in the experimental workflow.
    mv "<changeRoot>" "<planningHome.changesDir>/archive/<target-name>"
    ```
 
+5.5. **Commit and prepare a PR for the archive (if this repo requires PRs to reach its default branch)**
+
+   OpenSpec's own team-workflow convention treats `openspec/` as regular source: committed like any other file, following whatever review process the repo already uses (see `docs/team-workflow.md`, "You commit `openspec/` like any source"). If the current working tree is a git repository whose default branch requires pull requests (branch protection, or the user/project context has said so), this step finishes the job locally initiated by the archive move so it isn't left as uncommitted, unpushed changes:
+
+   - `git add` the moved/created/modified files (the archived folder's new location, any synced main spec files, and nothing unrelated).
+   - `git commit` with a clear message naming the archived change (e.g. "Archive <change-name>, sync <capability> spec").
+   - Create a fresh branch for this (e.g. `chore/archive-<change-name>`) and push it.
+   - **Stop here and ask the user**: "Archive committed and pushed to `chore/archive-<change-name>`. Want me to open the PR now, or will you do it yourself?" Do not open the PR automatically — the user decides when. This avoids creating an untracked, unreviewed PR that nobody is watching.
+   - If the user confirms, open the pull request using GitHub tools and report the URL. If they say they'll do it themselves, confirm the branch name and stop - do not check on it later unless asked.
+
+   If the repository does not require PRs to reach its default branch (direct pushes are allowed), commit and push directly to that branch instead of opening a branch/PR - there is no review gate to route through.
+
+   Skip this entire step if the working tree is not a git repository, or if committing archive changes is out of scope for how this project is being used (e.g. a scratch/demo environment) - use judgment, and ask if unclear.
+
 6. **Display summary**
 
    Show archive completion summary including:
@@ -147,6 +174,8 @@ Archive a completed change in the experimental workflow.
    - Schema that was used
    - Archive location
    - Spec sync status (synced / sync skipped / no delta specs)
+   - External status reconciliation, if step 2.5 ran (e.g. "PR #5 confirmed merged")
+   - Whether the archive itself was committed/pushed, and its branch name, if step 5.5 ran
    - Note about any warnings (incomplete artifacts/tasks)
 
 **Output On Success**
@@ -158,6 +187,8 @@ Archive a completed change in the experimental workflow.
 **Schema:** <schema-name>
 **Archived to:** the archive path derived from `planningHome.changesDir`/<target-name>/
 **Specs:** ✓ Synced to main specs
+**External status:** <only present if step 2.5 found and reconciled a post-implementation artifact, e.g. "PR #5 confirmed merged" - omit if no such artifact exists>
+**Archive commit:** <only present if step 5.5 ran, e.g. "Pushed to chore/archive-<name> - awaiting your decision to open a PR" or "PR opened: <url>" or "Committed directly to <default-branch>" - omit if step 5.5 was skipped>
 
 All artifacts complete. All tasks complete.
 ```
@@ -217,6 +248,8 @@ Target archive directory already exists.
 - Show clear summary of what happened
 - If sync is requested, run the `/opsx:sync` workflow inline (agent-driven)
 - Never archive while a spec sync is still in flight — run the sync inline and verify the main specs before moving `changeRoot`
+- Never archive a change whose post-implementation artifact (discovered generically in step 2.5, e.g. a PR-tracking artifact) reports still open/unresolved — this check happens directly in step 2.5, regardless of how archive was invoked, and always delegates the actual status check to the artifact's own skill rather than checking GitHub or any other external system itself
+- Never open the archive's own PR without the user's explicit confirmation — step 5.5 commits and pushes, then stops and asks; it does not open a PR automatically, to avoid creating an untracked PR nobody is watching
 - If delta specs exist, always run the sync assessment and show the combined summary before prompting
 - Apply relevant runtime context and report conflicts; operation guidance remains advisory
 - Consider every guidance entry and explain any inapplicable or conflicting advice
