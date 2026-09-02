@@ -105,7 +105,7 @@ Implement tasks from an OpenSpec change.
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: run `openspec status --change "<name>" --json` and look at `artifacts` for any entries beyond the ones `apply` just finished (i.e. artifacts not in `applyRequires`, now showing `ready`) - do not assume a specific id like `pr`, just check what the schema itself reports as the next ready artifact(s). For each such artifact, run `openspec instructions <artifact-id> --change "<name>" --json` and surface its `instruction` field to the user verbatim as the next-step suggestion (this is the schema's own canonical guidance, which may delegate to a skill or may not - follow whatever it says rather than hardcoding a skill name). If there is no such artifact, suggest archive
+   - If all done: run `openspec status --change "<name>" --json` and look at `artifacts` for any entries beyond the ones `apply` just finished (i.e. artifacts not in `applyRequires`, now showing `ready`) - do not assume a specific id like `pr`, just check what the schema itself reports as the next ready artifact(s). For each such artifact, run `openspec instructions <artifact-id> --change "<name>" --json` and surface its `instruction` field to the user verbatim as the next-step suggestion (this is the schema's own canonical guidance, which may delegate to a skill or may not - follow whatever it says rather than hardcoding a skill name). End this suggestion with an explicit question (e.g. "Want me to do that now?") and stop - do not invoke the delegated skill or take the suggested action without the user's explicit go-ahead in a following message. If there is no such artifact, suggest archive the same way - as a question, not an automatic next action
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -136,8 +136,8 @@ Working on task 4/7: <task description>
 - [x] Task 2
 ...
 
-All tasks complete! You can archive this change with `/opsx:archive`.
-(If `status` reports a further ready artifact beyond what apply just finished, instead surface that artifact's `instruction` field - fetched via `openspec instructions <artifact-id> --change "<name>" --json` - as the next-step suggestion, rather than hand-writing it or assuming its id.)
+All tasks complete! You can archive this change with `/opsx:archive`. Want me to do that now?
+(If `status` reports a further ready artifact beyond what apply just finished, instead surface that artifact's `instruction` field - fetched via `openspec instructions <artifact-id> --change "<name>" --json` - as the next-step suggestion, ending with the same kind of question, rather than hand-writing it or assuming its id.)
 ```
 
 **Output On Pause (Issue Encountered)**
@@ -176,6 +176,7 @@ What would you like to do?
 - Consider every guidance entry; explain any inapplicable or conflicting advice
 - Do not copy runtime context or operation guidance into implementation files or planning artifacts
 - Preserve CLI-controlled blocked/ready/all-done behavior and completion criteria
+- Never invoke a delegated skill or take the suggested next action (opening a PR, archiving, etc.) on completion without the user's explicit go-ahead in a following message - end the suggestion with a question and stop
 
 **Fluid Workflow Integration**
 
