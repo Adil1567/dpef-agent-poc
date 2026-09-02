@@ -226,3 +226,9 @@ apply:
   instruction: |
     Read context files, work through pending tasks, mark complete as you go.
     Pause if you hit blockers or need clarification.
+
+    Once every task is checked off, this schema also tracks a `pr` artifact
+    (requires: tasks). Run `openspec instructions pr --change "<name>" --json`
+    and follow its instruction field - it delegates to the openspec-pr-lifecycle
+    skill to open a pull request for the implemented branch. Do not open the
+    PR yourself or call GitHub APIs directly from this instruction.
