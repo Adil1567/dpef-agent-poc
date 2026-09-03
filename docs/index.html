@@ -965,22 +965,29 @@ Proposal ──► Specs ──► Design ──► Tasks ──► <span class=
     <section id="part-5">
       <p class="part-label">Part 5</p>
       <h2>Why not a standalone skill?</h2>
-      <p class="lede">We already have a standalone example in this same repo — <code>dpef-init</code> / <code>dpef-build-feature</code>. That pair works, and it's a legitimate pattern. But it hand-rolls its own state machine, its own YAML file per feature, its own script to enforce valid transitions — and none of it is visible to <code>openspec status</code>. A separate system living alongside OpenSpec, not integrated with it.</p>
+      <p class="lede">This choice is really about the team, not the architecture. We work on a large team, across many contributors and a long project lifetime — and that's the actual reason PR tracking had to live inside OpenSpec instead of a separate, self-contained skill.</p>
 
-      <p>What we built instead treats the PR as just one more node in the same planning graph as the proposal, the specs, the design, and the tasks. That means we get everything OpenSpec already does — dependency tracking, a generic <code>status</code>/<code>instructions</code> API, the archive-and-sync workflow, git-reviewable history — for free, instead of reimplementing it. A team that already uses OpenSpec for planning doesn't need to learn a second system; the PR step just shows up as the natural next step after tasks, using the exact same commands they already know.</p>
+      <h3>Reviewable by anyone, not just the author</h3>
+      <p>A standalone skill can hide its state in a format only it understands — a custom YAML file, an internal script's private notion of "in progress" vs. "merged." On a big team, that's a problem: a reviewer who didn't write the skill has to learn its private format just to understand what happened to one change. Because <code>pr.md</code> is a plain markdown artifact sitting next to <code>proposal.md</code> and <code>tasks.md</code>, anyone opening the PR for the archive move can read the entire history of that change — what was proposed, what was built, what a reviewer flagged, how it was resolved — without knowing anything about how the PR lifecycle skill itself works internally.</p>
+
+      <h3>Faster to understand what was actually built</h3>
+      <p>On a large team, most people encounter a change after the fact — reviewing it, debugging near it, or building on top of it months later. The Review Log in <code>pr.md</code> is the fastest path to that understanding: it separately narrates every comment, whether it was a bug or a spec gap, and exactly what changed in response. Nobody has to reconstruct that story from commit messages or a GitHub thread that may already be closed.</p>
+
+      <h3>Long-term memory the team can rely on</h3>
+      <p>A standalone skill's state typically lives in a format built for the skill to consume, not for a person to read six months later. OpenSpec's artifacts are built for exactly that — the whole point of writing the plan down is so a person or another AI session, long after the original context is gone, can pick the file up and understand it cold. A team member who wasn't in the room for the original discussion, or returns to a change after a long gap, gets the same clarity a teammate who was there gets.</p>
 
       <div class="compare">
         <div class="compare-card">
-          <p class="compare-tag">Standalone skill</p>
-          <p>Own state machine, own file format, own transition script. Invisible to <code>openspec status</code>. A second system to learn and maintain.</p>
+          <p class="compare-tag">Standalone skill (e.g. dpef-build-feature)</p>
+          <p>Own state machine, own file format, own transition script. A reviewer has to learn the skill's internals to understand a single change. Invisible to <code>openspec status</code>.</p>
         </div>
         <div class="compare-card after">
           <p class="compare-tag">Built into OpenSpec</p>
-          <p>PR is a node in the same graph. Dependency tracking, status, and archive workflow all come for free. No new mental model.</p>
+          <p>PR history is a plain markdown artifact, readable the same way the rest of the plan is. Any teammate, at any point later, can review and understand it without extra context.</p>
         </div>
       </div>
 
-      <p>The trade-off worth being honest about: this only pays off if you're already using OpenSpec for planning. If a team's whole workflow is one narrow, repeatable task, a hand-rolled skill is genuinely simpler and has less surface area to break. But for general software development — where proposals, specs, and tasks already need to live somewhere reviewable — building PR lifecycle in as a native part of that same system is what actually simplifies day-to-day work: one workflow, one set of commands, one place to look for the state of any change, from idea to merged PR.</p>
+      <p>The trade-off worth being honest about: this only pays off at the scale we're at. A single developer on one narrow, repeatable task doesn't need this — a hand-rolled skill like <code>dpef-build-feature</code> is genuinely simpler there, with less surface area to break. But for a large team where proposals, specs, and tasks already need to live somewhere reviewable, and where changes get picked up by people who weren't there when they were written, building PR lifecycle in as a native part of that same system is what actually keeps everyone on the same page — one workflow, one set of commands, one place to look for the state of any change, from idea to merged PR.</p>
     </section>
 
     <!-- PART 6 -->
