@@ -1,0 +1,1048 @@
+<title>PR Lifecycle</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --paper: #f7f6f3;
+    --paper-raised: #fdfcfa;
+    --ink: #23221f;
+    --ink-soft: #56534c;
+    --ink-faint: #8a867c;
+    --line: #ddd9d0;
+    --line-soft: #e9e6de;
+    --accent: #3d6b75;
+    --accent-soft: #dbe7e8;
+    --accent-ink: #2a4d55;
+    --status-blocked: #b8863b;
+    --status-blocked-bg: #f3e6cf;
+    --status-ready: #3d6b75;
+    --status-ready-bg: #dbe7e8;
+    --status-done: #5a8262;
+    --status-done-bg: #e1ebe0;
+    --term-bg: #1b1d20;
+    --term-ink: #e8e6df;
+    --term-ink-dim: #8f9296;
+    --term-accent: #7fb7c2;
+    --term-user: #d8b878;
+    --shadow: 0 1px 2px rgba(35,34,31,0.04), 0 4px 16px rgba(35,34,31,0.06);
+    --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16171a;
+      --paper-raised: #1d1f22;
+      --ink: #e9e7e1;
+      --ink-soft: #b3b0a7;
+      --ink-faint: #767368;
+      --line: #34363a;
+      --line-soft: #2a2c2f;
+      --accent: #6fb3c0;
+      --accent-soft: #223338;
+      --accent-ink: #a3d3db;
+      --status-blocked: #d9a55c;
+      --status-blocked-bg: #332a1a;
+      --status-ready: #6fb3c0;
+      --status-ready-bg: #1d2f33;
+      --status-done: #8bb894;
+      --status-done-bg: #1f2b21;
+      --term-bg: #101113;
+      --term-ink: #e8e6df;
+      --term-ink-dim: #74777b;
+      --term-accent: #7fb7c2;
+      --term-user: #d8b878;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 4px 20px rgba(0,0,0,0.3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #16171a;
+    --paper-raised: #1d1f22;
+    --ink: #e9e7e1;
+    --ink-soft: #b3b0a7;
+    --ink-faint: #767368;
+    --line: #34363a;
+    --line-soft: #2a2c2f;
+    --accent: #6fb3c0;
+    --accent-soft: #223338;
+    --accent-ink: #a3d3db;
+    --status-blocked: #d9a55c;
+    --status-blocked-bg: #332a1a;
+    --status-ready: #6fb3c0;
+    --status-ready-bg: #1d2f33;
+    --status-done: #8bb894;
+    --status-done-bg: #1f2b21;
+    --term-bg: #101113;
+    --term-ink: #e8e6df;
+    --term-ink-dim: #74777b;
+    --term-accent: #7fb7c2;
+    --term-user: #d8b878;
+    --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  a { color: var(--accent-ink); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Page shell ---------- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Masthead ---------- */
+
+  .masthead {
+    grid-column: 1 / -1;
+    padding: 3.2rem clamp(1.5rem, 4vw, 3rem) 2rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  .masthead h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.9rem, 3.4vw, 2.7rem);
+    line-height: 1.12;
+    margin: 0 0 0.85rem;
+    text-wrap: balance;
+    max-width: 18ch;
+  }
+
+  .masthead .dek {
+    font-size: 1.08rem;
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin: 0;
+  }
+
+  /* ---------- Side nav ---------- */
+
+  .toc {
+    padding: 2.4rem 1.5rem 3rem 2rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: fit-content;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+
+  @media (max-width: 900px) {
+    .toc {
+      position: static;
+      max-height: none;
+      padding: 1.5rem clamp(1.5rem, 4vw, 3rem) 0;
+      border-bottom: 1px solid var(--line);
+    }
+  }
+
+  .toc-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 0.9rem;
+  }
+
+  .toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .toc a {
+    display: flex;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .toc a:hover { background: var(--paper-raised); color: var(--ink); }
+
+  .toc .num {
+    font-family: var(--font-mono);
+    color: var(--ink-faint);
+    font-size: 0.82rem;
+    min-width: 1.2em;
+  }
+
+  /* ---------- Main column ---------- */
+
+  main {
+    padding: 2.6rem clamp(1.5rem, 4vw, 3.4rem) 6rem;
+    min-width: 0;
+    border-left: 1px solid var(--line);
+  }
+
+  @media (max-width: 900px) { main { border-left: none; } }
+
+  section { margin-bottom: 3.6rem; scroll-margin-top: 1.5rem; }
+  section:last-child { margin-bottom: 0; }
+
+  .part-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 0.5rem;
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+    line-height: 1.22;
+    margin: 0 0 1.1rem;
+    text-wrap: balance;
+    max-width: 32ch;
+  }
+
+  h3 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 1.08rem;
+    margin: 2rem 0 0.8rem;
+    color: var(--ink);
+  }
+
+  .lede {
+    font-size: 1.06rem;
+    color: var(--ink-soft);
+    max-width: 66ch;
+    margin: 0 0 1.4rem;
+  }
+
+  p { max-width: 66ch; margin: 0 0 1.1rem; }
+  p:last-child { margin-bottom: 0; }
+
+  ul, ol.body-list { max-width: 66ch; padding-left: 1.3rem; margin: 0 0 1.2rem; }
+  li { margin-bottom: 0.45rem; }
+  li:last-child { margin-bottom: 0; }
+
+  strong { font-weight: 600; }
+  em.callout { font-style: normal; color: var(--accent-ink); font-weight: 600; }
+
+  /* ---------- File tree / structure blocks ---------- */
+
+  .tree {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    line-height: 1.65;
+    white-space: pre;
+    overflow-x: auto;
+    max-width: 100%;
+    color: var(--ink-soft);
+    margin: 0 0 1.4rem;
+  }
+  .tree .hl { color: var(--accent-ink); font-weight: 600; }
+  .tree .comment { color: var(--ink-faint); }
+
+  /* ---------- Diagram blocks ---------- */
+
+  .diagram {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.4rem 1.5rem;
+    line-height: 1.7;
+    white-space: pre;
+    overflow-x: auto;
+    max-width: 100%;
+    color: var(--ink-soft);
+    margin: 0 0 1.4rem;
+    box-shadow: var(--shadow);
+  }
+
+  .diagram .accent { color: var(--accent-ink); font-weight: 600; }
+  .diagram .label { color: var(--ink-faint); }
+  .diagram .new-tag {
+    color: var(--status-done);
+    font-weight: 600;
+  }
+
+  /* ---------- Terminal / transcript blocks ---------- */
+
+  .term {
+    background: var(--term-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0 0 1.1rem;
+    box-shadow: var(--shadow);
+    max-width: 100%;
+  }
+
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .term-bar .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: rgba(255,255,255,0.14);
+  }
+
+  .term-bar .term-title {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--term-ink-dim);
+    letter-spacing: 0.05em;
+    margin-left: 0.3rem;
+  }
+
+  .term-body {
+    padding: 1rem 1.2rem 1.15rem;
+    overflow-x: auto;
+  }
+
+  .term-body pre {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.68;
+    color: var(--term-ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .term-body .prompt { color: var(--term-accent); }
+  .term-body .say { color: var(--term-user); }
+  .term-body .out { color: var(--term-ink); }
+  .term-body .dim { color: var(--term-ink-dim); }
+  .term-body .json-key { color: var(--term-accent); }
+  .term-body .json-str { color: #c9d98a; }
+
+  .term-caption {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    margin: 0.5rem 0 1.4rem;
+    padding-left: 0.2rem;
+  }
+
+  /* ---------- Status pills ---------- */
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-weight: 500;
+    padding: 0.18rem 0.6rem;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .pill.blocked { background: var(--status-blocked-bg); color: var(--status-blocked); }
+  .pill.ready { background: var(--status-ready-bg); color: var(--status-ready); }
+  .pill.done { background: var(--status-done-bg); color: var(--status-done); }
+
+  /* ---------- Dependency table ---------- */
+
+  .dep-table-wrap { overflow-x: auto; margin: 0 0 1.4rem; }
+  table.dep-table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 560px;
+    font-size: 0.92rem;
+  }
+  table.dep-table th, table.dep-table td {
+    text-align: left;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+  table.dep-table th {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    border-bottom: 1px solid var(--line);
+  }
+  table.dep-table tr:last-child td { border-bottom: none; }
+  table.dep-table td.artifact { font-family: var(--font-mono); font-size: 0.88rem; }
+  table.dep-table tr.new td.artifact { color: var(--accent-ink); font-weight: 600; }
+  table.dep-table code.req { font-family: var(--font-mono); font-size: 0.82rem; color: var(--ink-soft); }
+
+  /* ---------- Step cards (walkthrough) ---------- */
+
+  .step {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper-raised);
+    padding: 1.5rem 1.6rem 1.6rem;
+    margin: 0 0 1.6rem;
+    box-shadow: var(--shadow);
+  }
+
+  .step-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+
+  .step-head h4 {
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .step > .term:last-child,
+  .step > .tree:last-child,
+  .step > p:last-child { margin-bottom: 0; }
+
+  .step p { font-size: 0.96rem; }
+
+  /* ---------- Note / callout boxes ---------- */
+
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 0 8px 8px 0;
+    padding: 0.9rem 1.2rem;
+    margin: 0 0 1.4rem;
+    max-width: 66ch;
+  }
+  .note p { margin: 0; color: var(--ink); font-size: 0.95rem; }
+  .note p + p { margin-top: 0.6rem; }
+
+  /* ---------- Divider between commands + explanation say-blocks ---------- */
+
+  .say-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 0.7rem;
+    align-items: start;
+    margin-bottom: 0.35rem;
+  }
+
+  /* ---------- Comparison grid (before/after) ---------- */
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+    margin-bottom: 1.6rem;
+  }
+
+  @media (max-width: 640px) { .compare { grid-template-columns: 1fr; } }
+
+  .compare-card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    background: var(--paper-raised);
+  }
+
+  .compare-card.after { border-color: var(--accent); }
+
+  .compare-tag {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 0.6rem;
+  }
+
+  .compare-card.after .compare-tag { color: var(--accent-ink); }
+
+  .compare-card p { font-size: 0.9rem; margin: 0; max-width: none; }
+
+  /* ---------- Reference / command list ---------- */
+
+  .ref-block {
+    background: var(--term-bg);
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.9;
+    color: var(--term-ink);
+    overflow-x: auto;
+    margin-bottom: 1.1rem;
+  }
+  .ref-block .comment { color: var(--term-ink-dim); }
+  .ref-block .cmd { color: var(--term-accent); }
+
+  /* ---------- Footer / see also ---------- */
+
+  .see-also {
+    border-top: 1px solid var(--line);
+    padding-top: 1.6rem;
+    margin-top: 3rem;
+  }
+  .see-also ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .see-also a { text-decoration: none; font-size: 0.94rem; display: flex; align-items: center; gap: 0.5rem; }
+  .see-also a::before { content: "→"; color: var(--accent); }
+  .see-also a:hover { text-decoration: underline; }
+
+  hr.rule { border: none; border-top: 1px solid var(--line); margin: 2.4rem 0; }
+</style>
+
+<div class="shell">
+
+  <header class="masthead">
+    <p class="eyebrow">OpenSpec Extension &middot; Reference &amp; Demo</p>
+    <h1>The PR Lifecycle</h1>
+    <p class="dek">What OpenSpec is, the gap it left after code was written, and how one new artifact — <code>pr</code> — closes it. Written for people seeing OpenSpec for the first time.</p>
+  </header>
+
+  <nav class="toc" aria-label="Sections">
+    <p class="toc-label">Contents</p>
+    <ol>
+      <li><a href="#part-1"><span class="num">1</span><span>What is OpenSpec?</span></a></li>
+      <li><a href="#part-2"><span class="num">2</span><span>The gap after code ships</span></a></li>
+      <li><a href="#part-3"><span class="num">3</span><span>The PR lifecycle extension</span></a></li>
+      <li><a href="#part-4"><span class="num">4</span><span>Full walkthrough</span></a></li>
+      <li><a href="#part-5"><span class="num">5</span><span>Why not a standalone skill</span></a></li>
+      <li><a href="#part-6"><span class="num">6</span><span>Extending to other domains</span></a></li>
+      <li><a href="#reference"><span class="num">↴</span><span>Command reference</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- PART 1 -->
+    <section id="part-1">
+      <p class="part-label">Part 1</p>
+      <h2>What is OpenSpec?</h2>
+      <p class="lede">AI coding assistants are powerful but unpredictable when requirements live only in chat. OpenSpec adds a lightweight planning layer so you and your AI agree on what to build <em class="callout">before</em> any code is written — and that agreement is a set of files checked into git, not a conversation that evaporates.</p>
+
+      <h3>The core idea</h3>
+      <p>Every change to a codebase starts as a small set of markdown files:</p>
+
+      <div class="dep-table-wrap">
+        <table class="dep-table">
+          <thead><tr><th>File</th><th>Answers</th></tr></thead>
+          <tbody>
+            <tr><td class="artifact">proposal.md</td><td><strong>Why</strong> are we doing this? What's changing?</td></tr>
+            <tr><td class="artifact">specs/</td><td><strong>What</strong> should the system do? — requirements &amp; testable scenarios</td></tr>
+            <tr><td class="artifact">design.md</td><td><strong>How</strong> will we build it? — architecture, trade-offs</td></tr>
+            <tr><td class="artifact">tasks.md</td><td><strong>What's left</strong> to do? — a checklist</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The AI reads and writes these files as it works. Because they're just markdown in your repo, they're reviewable in a pull request like any other change — no special tool required to read them.</p>
+
+      <h3>The two directories</h3>
+      <div class="tree">openspec/
+├── specs/              <span class="comment"># source of truth: how your system currently behaves</span>
+│   └── auth/
+│       └── spec.md
+└── changes/            <span class="comment"># work in progress: one folder per change</span>
+    └── add-dark-mode/
+        ├── proposal.md
+        ├── specs/      <span class="comment"># "delta" specs — only what's changing</span>
+        ├── design.md
+        └── tasks.md</div>
+
+      <p><code>specs/</code> never gets touched directly while a change is in progress. Each change proposes a <em>delta</em> — new requirements, modified requirements, removed requirements. When the change is finished and archived, the delta merges into the real <code>specs/</code>, and the folder moves to <code>changes/archive/</code> for history.</p>
+
+      <h3>The everyday loop</h3>
+
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">AI ASSISTANT CHAT</span></div>
+        <div class="term-body"><pre><span class="say">You: /opsx:propose "add dark mode"</span>
+<span class="out">AI:  Created openspec/changes/add-dark-mode/
+     ✓ proposal.md — why we're doing this, what's changing
+     ✓ specs/       — requirements and scenarios
+     ✓ design.md    — technical approach
+     ✓ tasks.md     — implementation checklist
+     Ready for implementation!</span>
+
+<span class="say">You: /opsx:apply</span>
+<span class="out">AI:  Implementing tasks...
+     ✓ 1.1 Add theme context provider
+     ✓ 1.2 Create toggle component
+     All tasks complete!</span>
+
+<span class="say">You: /opsx:archive</span>
+<span class="out">AI:  Archived to openspec/changes/archive/2026-09-03-add-dark-mode/
+     Specs updated. Ready for the next feature.</span></pre></div>
+      </div>
+
+      <p>Three commands, typed in your AI assistant's chat — not the terminal: <code>/opsx:propose</code>, <code>/opsx:apply</code>, <code>/opsx:archive</code>. That's the whole loop for a huge fraction of real work.</p>
+
+      <div class="note">
+        <p><strong>Why not just use "planning mode"?</strong> Planning mode in a chat is great for thinking through an approach — but the moment the conversation ends, so does the plan, unless something writes it down. OpenSpec is the thing that writes it down, in a form any future session, developer, or tool can read back without the original conversation.</p>
+      </div>
+    </section>
+
+    <!-- PART 2 -->
+    <section id="part-2">
+      <p class="part-label">Part 2</p>
+      <h2>The gap after code ships</h2>
+      <p class="lede">OpenSpec gets you from an idea to implemented, checked-off tasks. What it has no native answer for is everything that happens <em class="callout">after</em>.</p>
+
+      <ul>
+        <li>Opening the pull request</li>
+        <li>Handling review comments</li>
+        <li>Deciding whether a comment means "the code has a bug" or "the spec itself was incomplete"</li>
+        <li>Making sure a change never gets archived while its PR is still sitting there, unreviewed</li>
+      </ul>
+
+      <p>Here's what that gap looks like without any special handling:</p>
+
+      <div class="note">
+        <p>Team writes a proposal, specs get approved, tasks get implemented. PR opens. Reviewer leaves a comment two weeks later: <em>"Also track login attempts?"</em> Nobody's watching the PR. A month later someone archives the change anyway.</p>
+        <p>Now the spec doesn't mention login attempts, the code doesn't either, and nobody remembers this was ever raised. Specs and code have drifted apart.</p>
+      </div>
+
+      <p>Nothing about <code>openspec status</code> even knows a PR exists. That's the gap this extension closes.</p>
+    </section>
+
+    <!-- PART 3 -->
+    <section id="part-3">
+      <p class="part-label">Part 3</p>
+      <h2>The PR lifecycle extension</h2>
+      <p class="lede">We added one new artifact — <code>pr</code> — to the same planning graph as proposal, specs, design, and tasks, and one new skill that owns its entire lifecycle: opening it, polling it, triaging every comment, and reconciling its real GitHub status before archive is ever allowed to proceed.</p>
+
+      <h3>Before vs. after</h3>
+
+      <div class="diagram"><span class="label">BEFORE</span>
+Proposal ──► Specs ──► Design ──► Tasks ──► [implement] ──► <span class="label">??? (invisible to OpenSpec)</span>
+
+
+<span class="label">AFTER</span>
+Proposal ──► Specs ──► Design ──► Tasks ──► Verify ──► <span class="new-tag">PR</span> <span class="label">(first-class artifact)</span>
+                                                          │
+                                          ┌───────────────┴──────────────┐
+                                          ▼                               ▼
+                                  <span class="accent">Comment = Bug</span>                  <span class="accent">Comment = Spec Gap</span>
+                                  → fix code, push                → update spec first,
+                                                                     then re-implement
+                                          │                               │
+                                          └───────────────┬───────────────┘
+                                                           ▼
+                                                  Merged on GitHub
+                                                           ▼
+                                     Archive — blocked until merged (hard guardrail)</div>
+
+      <p><code>openspec status</code> now sees the PR. Archive refuses to run if it's still open. All of this comes from one schema file — nothing is hardcoded to this specific repo, which means it's copy-paste portable to any team using OpenSpec.</p>
+
+      <h3>The new artifact</h3>
+      <p>Same mental model as every other OpenSpec artifact: it has a template, an instruction, and dependencies.</p>
+
+      <div class="dep-table-wrap">
+        <table class="dep-table">
+          <thead><tr><th>Artifact</th><th>Purpose</th><th>Requires</th></tr></thead>
+          <tbody>
+            <tr><td class="artifact">proposal.md</td><td>Why + what's changing</td><td><code class="req">—</code></td></tr>
+            <tr><td class="artifact">specs/</td><td>Delta specs, what the system does</td><td><code class="req">proposal</code></td></tr>
+            <tr><td class="artifact">design.md</td><td>How to build it</td><td><code class="req">proposal</code></td></tr>
+            <tr><td class="artifact">tasks.md</td><td>Implementation checklist</td><td><code class="req">specs, design</code></td></tr>
+            <tr><td class="artifact">verify.md</td><td>Test results (pass/fail)</td><td><code class="req">tasks</code></td></tr>
+            <tr class="new"><td class="artifact">pr.md</td><td>PR URL, status, CI, review log</td><td><code class="req">tasks, verify</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>This lives in <code>openspec/schemas/spec-driven-pr/schema.yaml</code>:</p>
+
+      <div class="ref-block">- id: pr
+  generates: pr.md
+  description: Pull request tracking (PR URL, status, review outcome) for this change
+  instruction: |
+    Invoke the openspec-pr-lifecycle skill to open a pull request for this
+    change's implemented branch. Record the PR number and URL returned by
+    the skill into pr.md using the template. Do not open the PR yourself
+    or call GitHub APIs directly from this instruction - delegate to the skill.
+  requires:
+    - tasks
+    - verify</div>
+
+      <p>Because <code>pr</code> requires <code>verify</code>, you can never accidentally open a PR for code that hasn't been tested — the artifact stays <span class="pill blocked">blocked</span> until verify passes.</p>
+    </section>
+
+    <!-- PART 4 -->
+    <section id="part-4">
+      <p class="part-label">Part 4</p>
+      <h2>Full demo walkthrough</h2>
+      <p class="lede">Every step below shows the actual command and the output it produces.</p>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">Step 1</span><h4>Create a change with the PR schema</h4></div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">TERMINAL</span></div>
+          <div class="term-body"><pre><span class="prompt">$</span> <span class="out">openspec new change "add-dark-mode" --schema spec-driven-pr</span>
+<span class="dim">✓ Created openspec/changes/add-dark-mode/</span></pre></div>
+        </div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">TERMINAL</span></div>
+          <div class="term-body"><pre><span class="prompt">$</span> <span class="out">openspec status --change add-dark-mode --json</span>
+{
+  <span class="json-key">"artifacts"</span>: [
+    { <span class="json-key">"id"</span>: <span class="json-str">"proposal"</span>, <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [] },
+    { <span class="json-key">"id"</span>: <span class="json-str">"specs"</span>,    <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"proposal"</span>] },
+    { <span class="json-key">"id"</span>: <span class="json-str">"design"</span>,   <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"proposal"</span>] },
+    { <span class="json-key">"id"</span>: <span class="json-str">"tasks"</span>,    <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"specs"</span>, <span class="json-str">"design"</span>] },
+    { <span class="json-key">"id"</span>: <span class="json-str">"verify"</span>,   <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"tasks"</span>] },
+    { <span class="json-key">"id"</span>: <span class="json-str">"pr"</span>,       <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"tasks"</span>, <span class="json-str">"verify"</span>] }
+  ]
+}</pre></div>
+        </div>
+        <p>Everything blocked, dependency chain visible directly in the JSON — this is the schema, not something hand-written for this change.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">Step 2</span><h4>Fill in planning artifacts</h4></div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">AI ASSISTANT CHAT</span></div>
+          <div class="term-body"><pre><span class="say">You:  /opsx:propose add dark mode toggle with system preference detection</span>
+<span class="out">AI:   Created openspec/changes/add-dark-mode/
+      ✓ proposal.md
+      ✓ specs/ui/spec.md
+      ✓ design.md
+      ✓ tasks.md
+      Ready for implementation!</span></pre></div>
+        </div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">TERMINAL</span></div>
+          <div class="term-body"><pre><span class="prompt">$</span> <span class="out">openspec status --change add-dark-mode --json | jq '.artifacts[] | {id, status}'</span>
+{ <span class="json-key">"id"</span>: <span class="json-str">"proposal"</span>, <span class="json-key">"status"</span>: <span class="json-str">"done"</span> }
+{ <span class="json-key">"id"</span>: <span class="json-str">"specs"</span>,    <span class="json-key">"status"</span>: <span class="json-str">"done"</span> }
+{ <span class="json-key">"id"</span>: <span class="json-str">"design"</span>,   <span class="json-key">"status"</span>: <span class="json-str">"done"</span> }
+{ <span class="json-key">"id"</span>: <span class="json-str">"tasks"</span>,    <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span> }
+{ <span class="json-key">"id"</span>: <span class="json-str">"verify"</span>,   <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span> }
+{ <span class="json-key">"id"</span>: <span class="json-str">"pr"</span>,       <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span> }</pre></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">Step 3</span><h4>Apply implements, then discovers what's next on its own</h4></div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">AI ASSISTANT CHAT</span></div>
+          <div class="term-body"><pre><span class="say">You:  /opsx:apply add-dark-mode</span>
+<span class="out">AI:   Implementing tasks...
+      ✓ 1.1 Add theme context provider
+      ✓ 1.2 Create toggle component
+      ✓ 2.1 Add CSS variables
+      ✓ 2.2 Wire up localStorage
+      All tasks complete!
+
+      This schema also tracks `verify` and `pr`. Running verify...
+      ✓ 23/23 tests passed
+
+      pr is now ready. Its instruction says to invoke
+      openspec-pr-lifecycle to open a pull request — proceed?</span></pre></div>
+        </div>
+
+        <p>Prove this wasn't hardcoded by asking the CLI directly, independent of apply:</p>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">TERMINAL</span></div>
+          <div class="term-body"><pre><span class="prompt">$</span> <span class="out">openspec instructions pr --change add-dark-mode --json</span>
+{
+  <span class="json-key">"status"</span>: <span class="json-str">"ready"</span>,
+  <span class="json-key">"instruction"</span>: <span class="json-str">"Invoke the openspec-pr-lifecycle skill to open a pull
+    request for this change's implemented branch. Record the
+    PR number and URL returned by the skill into pr.md."</span>,
+  <span class="json-key">"next_skill"</span>: <span class="json-str">"openspec-pr-lifecycle"</span>
+}</pre></div>
+        </div>
+        <p>Same text apply surfaced. It came from the schema, not from a string hardcoded inside <code>apply</code> itself.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">Step 4</span><h4>Opening the PR</h4></div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">AI ASSISTANT CHAT</span></div>
+          <div class="term-body"><pre><span class="say">You:  Invoke openspec-pr-lifecycle to open a PR for add-dark-mode.
+      Branch feature/dark-mode is pushed, base is main, repo is acme/webapp.</span>
+<span class="out">AI:   ✓ PR created: https://github.com/acme/webapp/pull/128
+      ✓ openspec/changes/add-dark-mode/pr.md created</span></pre></div>
+        </div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">TERMINAL</span></div>
+          <div class="term-body"><pre><span class="prompt">$</span> <span class="out">cat openspec/changes/add-dark-mode/pr.md</span>
+<span class="dim"># PR for add-dark-mode
+
+## PR Information
+- URL: https://github.com/acme/webapp/pull/128
+- Number: 128
+- Branch: feature/dark-mode
+- Status: open
+- Created: 2026-09-03T10:15:00Z
+
+## CI Status
+(pending first check)
+
+## Review Log
+(empty)</span></pre></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">Step 5</span><h4>Polling: comments and CI status together</h4></div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">AI ASSISTANT CHAT</span></div>
+          <div class="term-body"><pre><span class="say">You:  Check on the PR for add-dark-mode.</span>
+<span class="out">AI:   CI Status: ✅ all checks passing (build, tests: 23/23, lint)
+      Comments: none yet.</span></pre></div>
+        </div>
+
+        <p>A reviewer leaves: <em>"The toggle doesn't persist across reloads."</em></p>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">AI ASSISTANT CHAT</span></div>
+          <div class="term-body"><pre><span class="say">You:  Check on the PR for add-dark-mode.</span>
+<span class="out">AI:   CI Status: ✅ all checks passing
+
+      New comment from @reviewer:
+        "The toggle doesn't persist across reloads."
+
+      This is a bug — spec says the choice should persist,
+      implementation isn't wiring localStorage correctly.
+      May I fix and push?</span>
+<span class="say">You:  Yes.</span>
+<span class="out">AI:   ✓ Fixed, pushed commit a1b2c3d.
+      ✓ pr.md Review Log updated.</span></pre></div>
+        </div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">TERMINAL</span></div>
+          <div class="term-body"><pre><span class="prompt">$</span> <span class="out">cat openspec/changes/add-dark-mode/pr.md | sed -n '/Review Log/,$p'</span>
+<span class="dim">## Review Log
+
+### Comment 1
+- Author: reviewer
+- Type: Bug
+- Text: "The toggle doesn't persist across reloads."
+- Response: Fixed localStorage wiring, pushed a1b2c3d
+- Status: Resolved</span></pre></div>
+        </div>
+        <p>Note <code>tasks.md</code> and <code>specs/</code> are untouched — the plan was correct, only the implementation was wrong.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">Step 6</span><h4>A different comment: a spec gap</h4></div>
+
+        <p>A second reviewer asks: <em>"Should this also respect the OS-level dark mode setting?"</em></p>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">AI ASSISTANT CHAT</span></div>
+          <div class="term-body"><pre><span class="say">You:  Check on the PR for add-dark-mode.</span>
+<span class="out">AI:   New comment from @reviewer2:
+        "Should this also respect the OS-level dark mode setting?"
+
+      This isn't a bug — it's a new requirement not covered by the
+      current spec. I'd suggest updating the spec first, then
+      re-implementing. Proceed?</span>
+<span class="say">You:  Yes.</span>
+<span class="out">AI:   ✓ Ran /opsx:update — added "System preference detection" requirement
+      ✓ Ran /opsx:apply — implemented prefers-color-scheme detection
+      ✓ Pushed commit d4e5f6g
+      ✓ pr.md Review Log updated</span></pre></div>
+        </div>
+        <p>A completely different path — spec changes first, then code — because this time the plan itself was incomplete, not the implementation.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">Step 7</span><h4>Archive's hard stop</h4></div>
+
+        <p>With the PR still open:</p>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">AI ASSISTANT CHAT</span></div>
+          <div class="term-body"><pre><span class="say">You:  /opsx:archive add-dark-mode</span>
+<span class="out">AI:   Step 2.5: checking PR status on GitHub...
+      PR #128 is still open.
+
+      ❌ Archive blocked. Unreviewed PRs cannot be archived.
+      Merge the PR first, then run archive again.</span></pre></div>
+        </div>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">TERMINAL</span></div>
+          <div class="term-body"><pre><span class="prompt">$</span> <span class="out">ls openspec/changes/add-dark-mode</span>   <span class="dim"># still exists, unarchived</span>
+<span class="dim">proposal.md  specs/  design.md  tasks.md  verify.md  pr.md</span></pre></div>
+        </div>
+
+        <p>Merge the PR on GitHub, then:</p>
+
+        <div class="term">
+          <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">AI ASSISTANT CHAT</span></div>
+          <div class="term-body"><pre><span class="say">You:  /opsx:archive add-dark-mode</span>
+<span class="out">AI:   Step 2.5: checking PR status on GitHub...
+      ✓ PR #128 merged. pr.md Status updated to "merged".
+
+      Step 3: moved openspec/changes/add-dark-mode/
+              → openspec/changes/archive/2026-09-03-add-dark-mode/
+
+      Step 5: ready to commit this archive move and open a follow-up PR.
+              Should I open it?</span>
+<span class="say">You:  Yes.</span>
+<span class="out">AI:   ✓ Opened PR #129 for the archive move.</span></pre></div>
+        </div>
+        <p>Every step asks before acting — creating, opening, archiving, and opening the follow-up PR all wait for a yes.</p>
+      </div>
+    </section>
+
+    <!-- PART 5 -->
+    <section id="part-5">
+      <p class="part-label">Part 5</p>
+      <h2>Why not a standalone skill?</h2>
+      <p class="lede">We already have a standalone example in this same repo — <code>dpef-init</code> / <code>dpef-build-feature</code>. That pair works, and it's a legitimate pattern. But it hand-rolls its own state machine, its own YAML file per feature, its own script to enforce valid transitions — and none of it is visible to <code>openspec status</code>. A separate system living alongside OpenSpec, not integrated with it.</p>
+
+      <p>What we built instead treats the PR as just one more node in the same planning graph as the proposal, the specs, the design, and the tasks. That means we get everything OpenSpec already does — dependency tracking, a generic <code>status</code>/<code>instructions</code> API, the archive-and-sync workflow, git-reviewable history — for free, instead of reimplementing it. A team that already uses OpenSpec for planning doesn't need to learn a second system; the PR step just shows up as the natural next step after tasks, using the exact same commands they already know.</p>
+
+      <div class="compare">
+        <div class="compare-card">
+          <p class="compare-tag">Standalone skill</p>
+          <p>Own state machine, own file format, own transition script. Invisible to <code>openspec status</code>. A second system to learn and maintain.</p>
+        </div>
+        <div class="compare-card after">
+          <p class="compare-tag">Built into OpenSpec</p>
+          <p>PR is a node in the same graph. Dependency tracking, status, and archive workflow all come for free. No new mental model.</p>
+        </div>
+      </div>
+
+      <p>The trade-off worth being honest about: this only pays off if you're already using OpenSpec for planning. If a team's whole workflow is one narrow, repeatable task, a hand-rolled skill is genuinely simpler and has less surface area to break. But for general software development — where proposals, specs, and tasks already need to live somewhere reviewable — building PR lifecycle in as a native part of that same system is what actually simplifies day-to-day work: one workflow, one set of commands, one place to look for the state of any change, from idea to merged PR.</p>
+    </section>
+
+    <!-- PART 6 -->
+    <section id="part-6">
+      <p class="part-label">Part 6</p>
+      <h2>Extending to other domains</h2>
+      <p class="lede">The schema only defines <em class="callout">shape</em> — artifacts and dependencies — not implementation. That's what makes it extend cleanly to situations far beyond a single web app team.</p>
+
+      <h3>Different data products, different rules</h3>
+      <p>Create another schema, e.g. <code>spec-driven-data-product</code>, with its own artifacts (<code>data-specs</code>, <code>dbt-implementation</code>, <code>data-validation</code>) and its own skills. It lives in the same repo, shows up in the same <code>openspec status</code>, but follows completely different domain rules internally. A repo can hold as many schemas as it has kinds of work — a traditional service and a data pipeline can sit side by side, each tracked the same way at the top level.</p>
+
+      <h3>External agents — e.g. a Databricks job monitor</h3>
+      <p>Integrate through a skill, not by changing OpenSpec itself. A skill like <code>openspec-databricks-monitor</code> would read <code>pr.md</code> to find the relevant job, poll the Databricks API for its status, and write results back into the same Review Log the comment-triage step already updates. OpenSpec never needs to know Databricks exists — the skill is the translation layer between the external system and the shared file format.</p>
+
+      <h3>Keeping documentation from going stale as the repo grows</h3>
+      <p>Treat docs like code:</p>
+      <ul>
+        <li>Auto-generate reference material (a list of schemas, a list of skills) from the actual files in CI, so it can't silently drift from what's real.</li>
+        <li>Give each schema a version and a changelog, so upgrades are explicit and migrations can be scripted rather than guessed at.</li>
+        <li>Run a CI check for stale markers (<code>TODO</code>, <code>FIXME</code>) and broken cross-references in docs the same way you'd lint code.</li>
+      </ul>
+
+      <p>The common thread across all three: OpenSpec's job is to track dependencies and status generically. Anything domain-specific — data pipelines, external monitoring, custom validation rules — gets pushed into a schema or a skill, never into OpenSpec's core. That's what keeps the core simple even as the number of teams and domains using it grows.</p>
+    </section>
+
+    <hr class="rule">
+
+    <!-- REFERENCE -->
+    <section id="reference">
+      <p class="part-label">Reference</p>
+      <h2>Command reference</h2>
+
+      <div class="ref-block"><span class="comment"># Create a change using the PR schema</span>
+<span class="cmd">openspec new change</span> "feature-name" --schema spec-driven-pr
+
+<span class="comment"># Inspect artifact status and dependencies</span>
+<span class="cmd">openspec status</span> --change feature-name --json
+
+<span class="comment"># Ask what to do next for any artifact</span>
+<span class="cmd">openspec instructions</span> pr --change feature-name --json</div>
+
+      <div class="ref-block"><span class="comment"># In your AI assistant's chat:</span>
+<span class="cmd">/opsx:propose</span> "what you want to build"
+<span class="cmd">/opsx:apply</span> feature-name              <span class="comment"># implements, then surfaces pr instruction</span>
+<span class="cmd">Check on the PR for</span> feature-name      <span class="comment"># polls comments + CI, triages feedback</span>
+<span class="cmd">/opsx:archive</span> feature-name            <span class="comment"># refuses if PR is still open</span></div>
+
+      <div class="see-also">
+        <p class="toc-label">See also</p>
+        <ul>
+          <li><a href="#">Concepts — the full official OpenSpec mental model</a></li>
+          <li><a href="#">Getting Started — official first-steps guide</a></li>
+          <li><a href="#">How Commands Work — where /opsx commands run vs. the CLI</a></li>
+          <li><a href="#">test.md — full test script covering every behavior in this extension</a></li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+</div>
