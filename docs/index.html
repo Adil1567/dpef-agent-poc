@@ -684,7 +684,7 @@ Proposal ──► Specs ──► Design ──► Tasks ──► [implement] 
 
 
 <span class="label">AFTER</span>
-Proposal ──► Specs ──► Design ──► Tasks ──► Verify ──► <span class="new-tag">PR</span> <span class="label">(first-class artifact)</span>
+Proposal ──► Specs ──► Design ──► Tasks ──► <span class="new-tag">PR</span> <span class="label">(first-class artifact)</span>
                                                           │
                                           ┌───────────────┴──────────────┐
                                           ▼                               ▼
@@ -711,8 +711,7 @@ Proposal ──► Specs ──► Design ──► Tasks ──► Verify ─�
             <tr><td class="artifact">specs/</td><td>Delta specs, what the system does</td><td><code class="req">proposal</code></td></tr>
             <tr><td class="artifact">design.md</td><td>How to build it</td><td><code class="req">proposal</code></td></tr>
             <tr><td class="artifact">tasks.md</td><td>Implementation checklist</td><td><code class="req">specs, design</code></td></tr>
-            <tr><td class="artifact">verify.md</td><td>Test results (pass/fail)</td><td><code class="req">tasks</code></td></tr>
-            <tr class="new"><td class="artifact">pr.md</td><td>PR URL, status, CI, review log</td><td><code class="req">tasks, verify</code></td></tr>
+            <tr class="new"><td class="artifact">pr.md</td><td>PR URL, status, CI, review log</td><td><code class="req">tasks</code></td></tr>
           </tbody>
         </table>
       </div>
@@ -728,10 +727,9 @@ Proposal ──► Specs ──► Design ──► Tasks ──► Verify ─�
     the skill into pr.md using the template. Do not open the PR yourself
     or call GitHub APIs directly from this instruction - delegate to the skill.
   requires:
-    - tasks
-    - verify</div>
+    - tasks</div>
 
-      <p>Because <code>pr</code> requires <code>verify</code>, you can never accidentally open a PR for code that hasn't been tested — the artifact stays <span class="pill blocked">blocked</span> until verify passes.</p>
+      <p>Because <code>pr</code> depends on <code>tasks</code>, the artifact stays <span class="pill blocked">blocked</span> until every task is checked off — there's no way to open a PR for a change that isn't implemented yet.</p>
     </section>
 
     <!-- PART 4 -->
@@ -758,8 +756,7 @@ Proposal ──► Specs ──► Design ──► Tasks ──► Verify ─�
     { <span class="json-key">"id"</span>: <span class="json-str">"specs"</span>,    <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"proposal"</span>] },
     { <span class="json-key">"id"</span>: <span class="json-str">"design"</span>,   <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"proposal"</span>] },
     { <span class="json-key">"id"</span>: <span class="json-str">"tasks"</span>,    <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"specs"</span>, <span class="json-str">"design"</span>] },
-    { <span class="json-key">"id"</span>: <span class="json-str">"verify"</span>,   <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"tasks"</span>] },
-    { <span class="json-key">"id"</span>: <span class="json-str">"pr"</span>,       <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"tasks"</span>, <span class="json-str">"verify"</span>] }
+    { <span class="json-key">"id"</span>: <span class="json-str">"pr"</span>,       <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span>, <span class="json-key">"requires"</span>: [<span class="json-str">"tasks"</span>] }
   ]
 }</pre></div>
         </div>
@@ -787,7 +784,6 @@ Proposal ──► Specs ──► Design ──► Tasks ──► Verify ─�
 { <span class="json-key">"id"</span>: <span class="json-str">"specs"</span>,    <span class="json-key">"status"</span>: <span class="json-str">"done"</span> }
 { <span class="json-key">"id"</span>: <span class="json-str">"design"</span>,   <span class="json-key">"status"</span>: <span class="json-str">"done"</span> }
 { <span class="json-key">"id"</span>: <span class="json-str">"tasks"</span>,    <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span> }
-{ <span class="json-key">"id"</span>: <span class="json-str">"verify"</span>,   <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span> }
 { <span class="json-key">"id"</span>: <span class="json-str">"pr"</span>,       <span class="json-key">"status"</span>: <span class="json-str">"blocked"</span> }</pre></div>
         </div>
       </div>
@@ -805,8 +801,7 @@ Proposal ──► Specs ──► Design ──► Tasks ──► Verify ─�
       ✓ 2.2 Wire up localStorage
       All tasks complete!
 
-      This schema also tracks `verify` and `pr`. Running verify...
-      ✓ 23/23 tests passed
+      This schema also tracks a `pr` artifact once tasks are done.
 
       pr is now ready. Its instruction says to invoke
       openspec-pr-lifecycle to open a pull request — proceed?</span></pre></div>
@@ -943,7 +938,7 @@ Proposal ──► Specs ──► Design ──► Tasks ──► Verify ─�
         <div class="term">
           <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">TERMINAL</span></div>
           <div class="term-body"><pre><span class="prompt">$</span> <span class="out">ls openspec/changes/add-dark-mode</span>   <span class="dim"># still exists, unarchived</span>
-<span class="dim">proposal.md  specs/  design.md  tasks.md  verify.md  pr.md</span></pre></div>
+<span class="dim">proposal.md  specs/  design.md  tasks.md  pr.md</span></pre></div>
         </div>
 
         <p>Merge the PR on GitHub, then:</p>
